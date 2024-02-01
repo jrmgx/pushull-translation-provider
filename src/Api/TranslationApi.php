@@ -171,6 +171,27 @@ class TranslationApi
 
         self::$logger->debug('Downloaded translation '.$translation->filename);
 
-        return $response->getContent();
+        $content = $response->getContent();
+        $content = self::removeBom($content);
+
+        return self::forceV12($content);
+    }
+
+    private static function removeBom(string $data): string
+    {
+        // http://en.wikipedia.org/wiki/Byte_order_mark#UTF-8
+        if (substr($data, 0, 3) === pack('CCC', 0xEF, 0xBB, 0xBF)) {
+            $data = substr($data, 3);
+        }
+
+        return $data;
+    }
+
+    private static function forceV12(string $data): string
+    {
+        $v11 = '<xliff xmlns="urn:oasis:names:tc:xliff:document:1.1" version="1.1">';
+        $v12 = '<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">';
+
+        return str_replace($v11, $v12, $data);
     }
 }
